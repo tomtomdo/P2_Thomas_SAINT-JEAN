@@ -1,14 +1,21 @@
 import csv
 
-from scrapping_OC_functions import recuperation_infos_livre
+from scrapping_OC_functions import recuperation_infos_livre, recup_livres_categorie
 
 
-#recuperation des informations d'un livre à partir de l'adresse url de sa page produit
-url_livre = "https://books.toscrape.com/catalogue/sharp-objects_997/index.html"
-dico_livre = recuperation_infos_livre(url_livre)
+#récupération des liens url des produits d'une catégorie
+url_category = "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html"
+urls_livre = recup_livres_categorie(url_category)
 
-# création du document csv recensant les informations produit d'un livre
+#création d'une liste recensant les informations des livres d'une catégorie
+liste_dico_livres = []
+for url_livre in urls_livre:
+    dico_livre = recuperation_infos_livre(url_livre)
+    liste_dico_livres.append(dico_livre)
+
+# écriture des informations de la liste des livres d'une catégorie dans un fichier csv
 with open('infos_recueil.csv', 'w') as f:
-    w = csv.DictWriter(f, dico_livre.keys())
+    w = csv.DictWriter(f, liste_dico_livres[0].keys())
     w.writeheader()
-    w.writerow(dico_livre)
+    for dico in liste_dico_livres:
+        w.writerow(dico)
