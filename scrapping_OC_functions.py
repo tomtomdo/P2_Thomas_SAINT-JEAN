@@ -1,17 +1,20 @@
 import requests
 from bs4 import BeautifulSoup
 
-def recup_livres_categorie(url_category):
+
+def rec_category_books_urls(category_url):
     """Fonction de récupération des adresses url des livres d'une catégorie.
-        Cette fonction parcourt la page html d'une catégorie de livres et en extrait les adresses url des livres qui y sont listés.
-        Elle détecte également la présence d'une page suivante, et, le cas échéant, en récupère également les adresses url des produits référencés.
+        Cette fonction parcourt la page html d'une catégorie de livres et en extrait les adresses url des livres
+        qui y sont listés.
+        Elle détecte également la présence d'une page suivante, et, le cas échéant, en récupère également les adresses
+         url des produits référencés.
         Le processus se poursuit jusqu'à qu'il ne soit plus détecté de page suivante.
 
         Parameter
         ---------
         url_category: str
             url de la page html de la catégorie de livres.
-            
+
         Returns
         --------------------
         page_product_links: list
@@ -20,7 +23,7 @@ def recup_livres_categorie(url_category):
 
     page_product_links = []
     while True:
-        response_category_page = requests.get(url_category)
+        response_category_page = requests.get(category_url)
         page_category = response_category_page.content
         soup_page_category = BeautifulSoup(page_category, "html.parser")
         #récupération des urls de la page dans une liste
@@ -36,16 +39,18 @@ def recup_livres_categorie(url_category):
         if soup_page_category.find('li', class_="next"):
             next = soup_page_category.find('li', class_="next").next_element
             next_link = next['href']
-            url_category_splitted = url_category.split('/')
+            url_category_splitted = category_url.split('/')
             url_category_splitted[-1] = next_link
-            url_category = "/".join(url_category_splitted)
+            category_url = "/".join(url_category_splitted)
         else:
             break
     return page_product_links
 
-def recuperation_infos_livre(url_livre):
+
+def rec_book_details(book_url, description_titre=None):
     """Fonction de récupération des informations produits d'un livre.
-        Cette fonction parcourt la page produit d'un livre et récupère les informations suivantes pour les stocker dans un dictionnaire:
+        Cette fonction parcourt la page produit d'un livre et récupère les informations suivantes pour les stocker
+        dans un dictionnaire:
         -l'url de la page produit du livre
         -le titre du livre
         -la description du livre
@@ -59,7 +64,7 @@ def recuperation_infos_livre(url_livre):
 
         Parameters
         ----------
-        url_livre : str
+        book_url : str
             url de la page produit du livre.
 
         Returns
@@ -72,15 +77,18 @@ def recuperation_infos_livre(url_livre):
     dict_book = {}
 
     #remplissage du dictionnaire avec le reste des informations
-    dict_book['product_page_url'] = url_livre
+    dict_book['product_page_url'] = book_url
 
     #recuperation de la page html
-    response = requests.get(url_livre)
-    print("récupération des informations de la page en cours")
-    if response.status_code !=  200:
-        print("Page impossible a recuperer")
+    response = requests.get(book_url)
+    book_url_splitted = book_url.split("/")
+    book_name = book_url_splitted[-2]
+
+    print(f"récupération des informations produit du livre {book_name} en cours")
+    if response.status_code != 200:
+        print(f"Page {book_name} impossible a recuperer")
     else:
-        print("Page recuperee avec succes")
+        print(f"Page {book_name} recuperee avec succes")
 
     #transformation de la page en objet BeautifulSoup
     page = response.content
@@ -91,9 +99,12 @@ def recuperation_infos_livre(url_livre):
     dict_book['title'] = title.string
 
     #recuperation de la description du livre
-    descriptiontitre = soup.find("div", id="product_description")
-    description_contenu = descriptiontitre.next_sibling.next_sibling
-    dict_book['product_description'] = description_contenu.string
+    if soup.find("div", id="product_description"):
+        description_titre = soup.find("div", id="product_description")
+        description_contenu = description_titre.next_sibling.next_sibling
+        dict_book['product_description'] = description_contenu.string
+    else:
+        dict_book['product_description'] = "description de contenu absente"
 
     #recuperation des informations produits
     product_informations = soup.find("table").find_all("td")
@@ -110,9 +121,11 @@ def recuperation_infos_livre(url_livre):
     dict_book['review_rating'] = (note['class'][1])
 
     #recuperation de l'url de l'image du livre
-    infos_image =soup.find("img")
+    infos_image = soup.find("img")
     details_infos_image = infos_image.attrs
     dict_book['image_url'] = (details_infos_image['src'])
 
     return dict_book
+
+
 
