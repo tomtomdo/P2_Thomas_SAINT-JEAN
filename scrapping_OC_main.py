@@ -27,8 +27,8 @@ print("Liste des catégories de livre constituée")
 
 
 #récupération des url des livres pour chaque catégorie du site
-category_books_dicts_list = []
 for category_url in categories_urls_list:
+    category_books_dicts_list = []
     category_url_splitted = category_url.split("/")
     category_name = category_url_splitted[-2]
     os.mkdir(f"Icones_{category_name}")
